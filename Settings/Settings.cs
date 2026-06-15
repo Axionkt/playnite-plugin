@@ -457,18 +457,21 @@ namespace RomM.Settings
         {
             try
             {
-                HttpResponseMessage response = HttpClientSingleton.Instance.GetAsync(
+                using (var cts = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(30)))
+                using (HttpResponseMessage response = HttpClientSingleton.Instance.GetAsync(
                     $"{RomMHost}/api/platforms",
                     HttpCompletionOption.ResponseContentRead,
-                    new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(30)).Token).GetAwaiter().GetResult();
-                response.EnsureSuccessStatusCode();
+                    cts.Token).GetAwaiter().GetResult())
+                {
+                    response.EnsureSuccessStatusCode();
 
-                string body = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-                RomMPlatforms = JsonConvert.DeserializeObject<List<RomMPlatform>>(body);
+                    string body = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+                    RomMPlatforms = JsonConvert.DeserializeObject<List<RomMPlatform>>(body) ?? new List<RomMPlatform>();
+                }
             }
             catch (Exception ex)
             {
-                LogManager.GetLogger().Error($"[Settings] Failed to sync RomM platforms: {ex.Message}");
+                LogManager.GetLogger().Error($"[Settings] Failed to sync RomM platforms: {ex}");
             }
         }
 
