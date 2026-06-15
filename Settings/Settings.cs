@@ -388,6 +388,11 @@ namespace RomM.Settings
                     ServerVersion = info.Version;
                 }
 
+                // Sync the RomM platform list so the mapping dropdowns populate and import can resolve
+                // each mapping's platform — no manual "Sync RomM platforms" click required. Runs for both
+                // the settings "Authenticate" action and the pre-import connection check.
+                SyncPlatforms();
+
                 // Profile (name/role/avatar) is only needed for the settings UI, not for import.
                 if (fetchProfile)
                 {
@@ -443,6 +448,31 @@ namespace RomM.Settings
             }
 
             return true;
+        }
+
+        // Fetches the RomM platform list and assigns it to RomMPlatforms, which propagates to every
+        // mapping's AvailablePlatforms (populating the dropdowns and resolving the selected platform).
+        // Failures are logged but never block authentication or import.
+        private void SyncPlatforms()
+        {
+            try
+            {
+                using (var cts = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(30)))
+                using (HttpResponseMessage response = HttpClientSingleton.Instance.GetAsync(
+                    $"{RomMHost}/api/platforms",
+                    HttpCompletionOption.ResponseContentRead,
+                    cts.Token).GetAwaiter().GetResult())
+                {
+                    response.EnsureSuccessStatusCode();
+
+                    string body = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+                    RomMPlatforms = JsonConvert.DeserializeObject<List<RomMPlatform>>(body) ?? new List<RomMPlatform>();
+                }
+            }
+            catch (Exception ex)
+            {
+                LogManager.GetLogger().Error($"[Settings] Failed to sync RomM platforms: {ex}");
+            }
         }
 
         public void BeginEdit()
