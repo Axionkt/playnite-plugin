@@ -642,12 +642,9 @@ namespace RomM
 
                                 var updatePayload = new
                                 {
-                                    data = new
-                                    {
-                                        backlogged = status == "Plan to Play",
-                                        now_playing = status == "Playing",
-                                        status = RomMRomUser.CompletionStatusMap.FirstOrDefault((kv) => kv.Value == status && kv.Value != "Playing" && kv.Value != "Plan to Play" && kv.Value != "Not Played").Key
-                                    }
+                                    backlogged = status == "Plan to Play",
+                                    now_playing = status == "Playing",
+                                    status = RomMRomUser.CompletionStatusMap.FirstOrDefault((kv) => kv.Value == status && kv.Value != "Playing" && kv.Value != "Plan to Play" && kv.Value != "Not Played").Key
                                 };
                                 string apiRomMRomUserProps = CombineUrl(Settings.RomMHost, $"api/roms/{romMId}/props");
                                 HttpResponseMessage response = HttpClientSingleton.Instance.PutAsync(apiRomMRomUserProps, new StringContent(JsonConvert.SerializeObject(updatePayload), Encoding.UTF8, "application/json")).GetAwaiter().GetResult();
